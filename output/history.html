@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Analytics - MTProto Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #121826;
+            --border-color: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --emerald: #10b981;
+            --emerald-bg: rgba(16, 185, 129, 0.1);
+            --rose: #ef4444;
+            --rose-bg: rgba(239, 68, 68, 0.1);
+            --cyan: #06b6d4;
+            --cyan-bg: rgba(6, 182, 212, 0.1);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --yellow: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+
+        .logo h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a5b4fc, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .last-updated {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        .last-updated span {
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+            background-color: #1e293b;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background-color: #334155;
+        }
+
+        .nav-link.active {
+            background-color: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        /* Trend Summary Card */
+        .summary-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            font-size: 0.9375rem;
+            border-left: 4px solid var(--primary);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .trend-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .trend-improving {
+            background-color: var(--emerald-bg);
+            color: var(--emerald);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .trend-stable {
+            background-color: rgba(148, 163, 184, 0.1);
+            color: var(--text-secondary);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .trend-declining {
+            background-color: var(--rose-bg);
+            color: var(--rose);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .stat-main {
+            display: flex;
+            align-items: baseline;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-card.success-card .stat-value { color: var(--cyan); }
+        .stat-card.latency-card .stat-value { color: var(--yellow); }
+
+        .averages-sub {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .averages-sub span {
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Chart Layout */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .chart-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .chart-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 320px;
+            width: 100%%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>Historical Analytics</h1>
+                <p>MTProto Proxy Quality and Performance Over Time</p>
+            </div>
+            <div class="last-updated">
+                <p>Last verified: <span id="update-time">2026-06-18 20:28:41</span></p>
+            </div>
+        </header>
+
+        <nav>
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="history.html" class="nav-link active">Analytics</a>
+            <span class="nav-link" style="opacity: 0.5; cursor: not-allowed;" title="Disabled in Private Mode">Best Proxy Link (Private)</span>
+        </nav>
+
+        <div class="summary-card">
+            Ecosystem trend status is stable based on initial observations.
+        </div>
+
+        <!-- Trend metrics row -->
+        <section class="stats-grid">
+            <!-- Working proxies trend -->
+            <div class="stat-card">
+                <div class="card-header">
+                    <span class="stat-label">Active Proxies</span>
+                    <span class="trend-badge trend-stable">Stable</span>
+                </div>
+                <div class="stat-main">
+                    <span class="stat-value">25</span>
+                </div>
+                <div class="averages-sub">
+                    <p>7-Day Avg: <span>25.0</span></p>
+                    <p>30-Day Avg: <span>25.0</span></p>
+                </div>
+            </div>
+
+            <!-- Success rate trend -->
+            <div class="stat-card success-card">
+                <div class="card-header">
+                    <span class="stat-label">Success Rate</span>
+                    <span class="trend-badge trend-stable">Stable</span>
+                </div>
+                <div class="stat-main">
+                    <span class="stat-value">19.1%%</span>
+                </div>
+                <div class="averages-sub">
+                    <p>7-Day Avg: <span>19.1%%</span></p>
+                    <p>30-Day Avg: <span>19.1%%</span></p>
+                </div>
+            </div>
+
+            <!-- Average latency trend -->
+            <div class="stat-card latency-card">
+                <div class="card-header">
+                    <span class="stat-label">Average RTT</span>
+                    <span class="trend-badge trend-stable">Stable</span>
+                </div>
+                <div class="stat-main">
+                    <span class="stat-value">1219 ms</span>
+                </div>
+                <div class="averages-sub">
+                    <p>7-Day Avg: <span>1219 ms</span></p>
+                    <p>30-Day Avg: <span>1219 ms</span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts grid -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Active Working Proxies Over Time</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chartWorking"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Success Rate Over Time (%%)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chartSuccess"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Average Connection Latency Over Time (ms)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chartAverageLatency"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Fastest Proxy Latency Over Time (ms)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chartFastestLatency"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card" style="grid-column: 1 / -1;">
+                <h3>Best Health Score Over Time (%%)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="chartBestHealth"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart configuration options
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleColor: '#f8fafc',
+                    bodyColor: '#cbd5e1',
+                    borderColor: '#334155',
+                    borderWidth: 1,
+                    padding: 10,
+                    bodyFont: {
+                        family: 'Plus Jakarta Sans'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        borderColor: '#1e293b'
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: {
+                            family: 'Plus Jakarta Sans',
+                            size: 10
+                        },
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        borderColor: '#1e293b'
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: {
+                            family: 'Plus Jakarta Sans',
+                            size: 10
+                        }
+                    }
+                }
+            }
+        };
+
+        // Data arrays injected from Python backend
+        const labels = ["06-18 20:28"];
+        const dataWorking = [25];
+        const dataSuccess = [19.1];
+        const dataAverageLatency = [1219];
+        const dataFastestLatency = [299];
+        const dataBestHealth = [97];
+
+        // Render Working Proxies
+        new Chart(document.getElementById('chartWorking').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataWorking,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Render Success Rate
+        new Chart(document.getElementById('chartSuccess').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataSuccess,
+                    borderColor: '#06b6d4',
+                    backgroundColor: 'rgba(6, 182, 212, 0.05)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Render Average Latency
+        new Chart(document.getElementById('chartAverageLatency').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataAverageLatency,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Render Fastest Latency
+        new Chart(document.getElementById('chartFastestLatency').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataFastestLatency,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Render Best Health Score
+        new Chart(document.getElementById('chartBestHealth').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataBestHealth,
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.05)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: chartOptions
+        });
+    </script>
+</body>
+</html>
