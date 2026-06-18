@@ -1,0 +1,14 @@
+[
+  {
+    "server": "sample1.mtproto.co",
+    "port": 443,
+    "secret": "eed3db4616238b725c15e2195ec47eb384676f6f676c652e636f6d",
+    "latency_ms": 120.0,
+    "connect_ms": 40.0,
+    "handshake_ms": 80.0,
+    "resolve_ms": 10.0,
+    "type": "FakeTLS",
+    "status": "OK",
+    "health_score": 98
+  }
+]

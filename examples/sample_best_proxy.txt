@@ -1,0 +1,1 @@
+https://t.me/proxy?server=sample1.mtproto.co&port=443&secret=eed3db4616238b725c15e2195ec47eb384676f6f676c652e636f6d

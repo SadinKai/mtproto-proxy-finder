@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+*.session
+*.session-journal
+*.log
+.env
+.venv/
+venv/
+personal_data/
+
+# Ignore all generated outputs and archives
+output/
+archive/
+
+# OS/Junk ignores
+*.sqlite
+*.db
+*.bak
+*.tmp
+.DS_Store
+Thumbs.db

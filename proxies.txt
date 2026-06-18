@@ -1,0 +1,3 @@
+# Add MTProto proxy URLs here.
+# Example:
+# https://t.me/proxy?server=example.com&port=443&secret=example
