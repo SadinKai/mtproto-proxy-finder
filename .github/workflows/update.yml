@@ -43,32 +43,55 @@ jobs:
         run: |
           python checker.py --update --workers 100 --timeout 5.0
 
-      - name: Commit and push changes
+            - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          
+
           # Determine branch and event safety
           IS_MAIN_OR_DISPATCH="false"
           if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             IS_MAIN_OR_DISPATCH="true"
           fi
-          
+
           if [ "${{ env.PUBLISH_MODE }}" = "true" ] && [ "$IS_MAIN_OR_DISPATCH" = "true" ]; then
             echo "Running in Publish Mode (Safety Gates verified)."
-            # Force commit all generated lists (since they are git-ignored by default)
-            git add -f output/working.txt output/working.json output/best_proxy.txt output/top10.txt output/top25.txt output/top50.txt output/telegram_ready.txt output/telegram_import.txt output/proxy_state.json output/history.json archive/archive_dead.txt
+
+            git add -f \
+              output/working.txt \
+              output/working.json \
+              output/best_proxy.txt \
+              output/top10.txt \
+              output/top25.txt \
+              output/top50.txt \
+              output/telegram_ready.txt \
+              output/telegram_import.txt \
+              output/proxy_state.json \
+              output/history.json \
+              archive/archive_dead.txt
+
             git add -f output/dashboard.html output/history.html
+
           else
             echo "Running in Private Mode (PUBLISH_MODE=${{ env.PUBLISH_MODE }}, Safety Gates=$IS_MAIN_OR_DISPATCH)."
-            # Commit only public dashboards (aggregated stats only, force added)
+
             git add -f output/dashboard.html output/history.html
           fi
-          
-          # Commit only if changes are present
+
+          # Commit only if changes exist
           if [ -n "$(git status --porcelain)" ]; then
+
             git commit -m "Auto-update proxy lists and dashboards [skip ci]"
-            git push
+
+            echo "Fetching latest remote changes..."
+            git fetch origin
+
+            echo "Rebasing onto latest main..."
+            git pull --rebase origin main
+
+            echo "Pushing updated commit..."
+            git push origin HEAD:main
+
           else
             echo "No changes in tracked proxy dashboards or files."
           fi
