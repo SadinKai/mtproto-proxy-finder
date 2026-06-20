@@ -1,134 +1,150 @@
 name: Auto-update MTProto Proxies
 
 on:
-  schedule:
-    # Runs every 6 hours
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
-    # Allows manual runs from the GitHub Actions tab
+schedule:
+- cron: '0 */6 * * *'
+workflow_dispatch:
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+contents: write
+pages: write
+id-token: write
 
 concurrency:
-  group: "pages-and-update"
-  cancel-in-progress: false
+group: pages-and-update
+cancel-in-progress: true
 
 env:
-  PUBLISH_MODE: ${{ vars.PUBLISH_MODE || 'false' }}
+PUBLISH_MODE: ${{ vars.PUBLISH_MODE || 'false' }}
 
 jobs:
-  update:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+update:
+runs-on: ubuntu-latest
 
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-          cache: 'pip'
+```
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+  - name: Set up Python 3.13
+    uses: actions/setup-python@v5
+    with:
+      python-version: '3.13'
+      cache: 'pip'
 
-      - name: Run validation loop and update lists
-        run: |
-          python checker.py --update --workers 100 --timeout 5.0
+  - name: Install dependencies
+    run: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
 
-            - name: Commit and push changes
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+  - name: Run validation loop and update lists
+    run: |
+      python checker.py --update --workers 100 --timeout 5.0
 
-          # Determine branch and event safety
-          IS_MAIN_OR_DISPATCH="false"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            IS_MAIN_OR_DISPATCH="true"
-          fi
+  - name: Commit and push changes
+    run: |
+      git config --local user.email "github-actions[bot]@users.noreply.github.com"
+      git config --local user.name "github-actions[bot]"
 
-          if [ "${{ env.PUBLISH_MODE }}" = "true" ] && [ "$IS_MAIN_OR_DISPATCH" = "true" ]; then
-            echo "Running in Publish Mode (Safety Gates verified)."
+      IS_MAIN_OR_DISPATCH="false"
+      if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+        IS_MAIN_OR_DISPATCH="true"
+      fi
 
-            git add -f \
-              output/working.txt \
-              output/working.json \
-              output/best_proxy.txt \
-              output/top10.txt \
-              output/top25.txt \
-              output/top50.txt \
-              output/telegram_ready.txt \
-              output/telegram_import.txt \
-              output/proxy_state.json \
-              output/history.json \
-              archive/archive_dead.txt
+      if [ "${{ env.PUBLISH_MODE }}" = "true" ] && [ "$IS_MAIN_OR_DISPATCH" = "true" ]; then
+        echo "Running in Publish Mode (Safety Gates verified)."
 
-            git add -f output/dashboard.html output/history.html
+        git add -f \
+          output/working.txt \
+          output/working.json \
+          output/best_proxy.txt \
+          output/top10.txt \
+          output/top25.txt \
+          output/top50.txt \
+          output/telegram_ready.txt \
+          output/telegram_import.txt \
+          output/proxy_state.json \
+          output/history.json \
+          archive/archive_dead.txt
 
-          else
-            echo "Running in Private Mode (PUBLISH_MODE=${{ env.PUBLISH_MODE }}, Safety Gates=$IS_MAIN_OR_DISPATCH)."
+        git add -f output/dashboard.html output/history.html
 
-            git add -f output/dashboard.html output/history.html
-          fi
+      else
+        echo "Running in Private Mode (PUBLISH_MODE=${{ env.PUBLISH_MODE }}, Safety Gates=$IS_MAIN_OR_DISPATCH)."
 
-          # Commit only if changes exist
-          if [ -n "$(git status --porcelain)" ]; then
+        git add -f output/dashboard.html output/history.html
+      fi
 
-            git commit -m "Auto-update proxy lists and dashboards [skip ci]"
+      if [ -n "$(git status --porcelain)" ]; then
 
-            echo "Fetching latest remote changes..."
-            git fetch origin
+        git commit -m "Auto-update proxy lists and dashboards [skip ci]"
 
-            echo "Rebasing onto latest main..."
-            git pull --rebase origin main
+        echo "Fetching latest remote changes..."
+        git fetch origin
 
-            echo "Pushing updated commit..."
-            git push origin HEAD:main
+        echo "Rebasing onto latest main..."
+        git pull --rebase origin main
 
-          else
-            echo "No changes in tracked proxy dashboards or files."
-          fi
+        echo "Pushing updated commit..."
+        git push origin HEAD:main
 
-      - name: Prepare GitHub Pages deployment site
-        run: |
-          mkdir -p pages_site/output
-          cp index.html pages_site/
-          cp output/dashboard.html output/history.html output/history.json pages_site/output/
-          cp examples/sample_* pages_site/output/
-          
-          # Determine branch and event safety
-          IS_MAIN_OR_DISPATCH="false"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            IS_MAIN_OR_DISPATCH="true"
-          fi
-          
-          if [ "${{ env.PUBLISH_MODE }}" = "true" ] && [ "$IS_MAIN_OR_DISPATCH" = "true" ]; then
-            echo "Publish Mode: Copying detailed proxy files to pages site"
-            cp output/working.txt output/working.json output/best_proxy.txt output/top10.txt output/top25.txt output/top50.txt output/telegram_ready.txt output/telegram_import.txt pages_site/output/
-          else
-            echo "Private Mode: Safe dashboards only, no proxy list deployment"
-          fi
+      else
+        echo "No changes in tracked proxy dashboards or files."
+      fi
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './pages_site'
+  - name: Prepare GitHub Pages deployment site
+    run: |
+      mkdir -p pages_site/output
 
-  deploy:
-    needs: update
-    runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      cp index.html pages_site/
+      cp output/dashboard.html pages_site/output/
+      cp output/history.html pages_site/output/
+      cp output/history.json pages_site/output/
+
+      cp examples/sample_* pages_site/output/
+
+      IS_MAIN_OR_DISPATCH="false"
+      if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+        IS_MAIN_OR_DISPATCH="true"
+      fi
+
+      if [ "${{ env.PUBLISH_MODE }}" = "true" ] && [ "$IS_MAIN_OR_DISPATCH" = "true" ]; then
+        echo "Publish Mode: Copying detailed proxy files to pages site"
+
+        cp output/working.txt pages_site/output/
+        cp output/working.json pages_site/output/
+        cp output/best_proxy.txt pages_site/output/
+        cp output/top10.txt pages_site/output/
+        cp output/top25.txt pages_site/output/
+        cp output/top50.txt pages_site/output/
+        cp output/telegram_ready.txt pages_site/output/
+        cp output/telegram_import.txt pages_site/output/
+
+      else
+        echo "Private Mode: Safe dashboards only, no proxy list deployment"
+      fi
+
+  - name: Upload Pages artifact
+    uses: actions/upload-pages-artifact@v3
+    with:
+      path: ./pages_site
+```
+
+deploy:
+needs: update
+runs-on: ubuntu-latest
+
+```
+if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
+
+environment:
+  name: github-pages
+  url: ${{ steps.deployment.outputs.page_url }}
+
+steps:
+  - name: Deploy to GitHub Pages
+    id: deployment
+    uses: actions/deploy-pages@v4
+```
