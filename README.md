@@ -5,6 +5,34 @@
 
 A production-quality, self-updating MTProto proxy discovery, verification, ranking, and management platform written in Python 3.13. 
 
+# MTProto Proxy Finder & Manager
+
+[![Auto-update MTProto Proxies](https://github.com/\[USERNAME\]/\[REPOSITORY\]/actions/workflows/update.yml/badge.svg)](https://github.com/[USERNAME]/[REPOSITORY]/actions/workflows/update.yml)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Active-emerald?style=flat\&logo=github)](https://[USERNAME].github.io/[REPOSITORY]/)
+
+## 🔥 Live MTProto Proxy Dashboard
+
+* Automatically scans public MTProto proxies
+* Verifies connectivity and latency
+* Updates every few hours
+* Generates historical performance reports
+* Self-maintaining via GitHub Actions
+
+### Live Dashboard
+
+https://sadinkai.github.io/mtproto-proxy-finder/
+
+### Analytics
+
+https://sadinkai.github.io/mtproto-proxy-finder/output/history.html
+
+### Dashboard
+
+https://sadinkai.github.io/mtproto-proxy-finder/output/dashboard.html
+
+A production-quality, self-updating MTProto proxy discovery, verification, ranking, and management platform written in Python 3.13.
+
+
 It performs a **real cryptographic MTProto handshake** (generating `req_pq_multi` and validating the returned `resPQ` constructor and cryptographic nonce) to prove that Telegram traffic can traverse each proxy, rather than simply checking if a TCP port is open.
 
 ---
