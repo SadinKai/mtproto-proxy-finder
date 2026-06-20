@@ -5,8 +5,6 @@
 
 A production-quality, self-updating MTProto proxy discovery, verification, ranking, and management platform written in Python 3.13. 
 
-# MTProto Proxy Finder & Manager
-
 [![Auto-update MTProto Proxies](https://github.com/\[USERNAME\]/\[REPOSITORY\]/actions/workflows/update.yml/badge.svg)](https://github.com/[USERNAME]/[REPOSITORY]/actions/workflows/update.yml)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Active-emerald?style=flat\&logo=github)](https://[USERNAME].github.io/[REPOSITORY]/)
 
